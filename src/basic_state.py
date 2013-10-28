@@ -62,8 +62,8 @@ class GoToElevator(smach.State):
 	#move_base_pub.publish(elevator_door3)
         elevator_front.header.frame_id = "/map"
 
-        elevator_front.pose.position.x = 0.0
-        elevator_front.pose.position.y = 0.0
+        elevator_front.pose.position.x = 33.34
+        elevator_front.pose.position.y = 15.22
         elevator_front.pose.position.z = 0.0
 
         elevator_front.pose.position.x = 0.0
