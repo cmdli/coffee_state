@@ -7,6 +7,11 @@ import smach_ros
 import geometry_msgs
 import move_base
 
+pub = rospy.publisher('move_base_simple/goal', PoseStamped)
+door_front = PoseStamped()
+door_back = PoseStamped()
+elevator_front = PoseStamped()
+
 # define state CheckDoors
 class CheckDoors(smach.State):
     def __init__(self):
@@ -55,6 +60,18 @@ class GoToElevator(smach.State):
     def execute(self, userdata):
         #rospy.loginfo('Executing state GoToElevator')
 	#move_base_pub.publish(elevator_door3)
+        elevator_front.header.frame_id = "/map"
+
+        elevator_front.pose.position.x = 0.0
+        elevator_front.pose.position.y = 0.0
+        elevator_front.pose.position.z = 0.0
+
+        elevator_front.pose.position.x = 0.0
+        elevator_front.pose.position.y = 0.0
+        elevator_front.pose.position.z = 0.0
+        elevator_front.pose.position.w = 1.0
+
+        pub.publish(elevator_front)
         return 'elevator_open'
 
 def main():
@@ -66,14 +83,14 @@ def main():
     # Open the container
     with sm:
         # Add states to the container
-        smach.StateMachine.add('CHECKDOORS', CheckDoors(), 
-                               transitions={'more_doors':'MOVETODOOR', 'no_more_doors':'GOTOELEVATOR'})
-        smach.StateMachine.add('MOVETODOOR', MoveToDoor(), 
-                               transitions={'door_open':'GOTHROUGHDOOR','door_closed':'ASKFORHELPWITHDOOR'})
-	smach.StateMachine.add('ASKFORHELPWITHDOOR', AskForHelpWithDoor(),
-                               transitions={'door_open':'GOTHROUGHDOOR'})
-	smach.StateMachine.add('GOTHROUGHDOOR', GoThroughDoor(),
-                               transitions={'successfull':'CHECKDOORS','unsuccessfull':'ASKFORHELPWITHDOOR'})
+#        smach.StateMachine.add('CHECKDOORS', CheckDoors(), 
+#                               transitions={'more_doors':'MOVETODOOR', 'no_more_doors':'GOTOELEVATOR'})
+        # smach.StateMachine.add('MOVETODOOR', MoveToDoor(), 
+        #                        transitions={'door_open':'GOTHROUGHDOOR','door_closed':'ASKFORHELPWITHDOOR'})
+	# smach.StateMachine.add('ASKFORHELPWITHDOOR', AskForHelpWithDoor(),
+        #                        transitions={'door_open':'GOTHROUGHDOOR'})
+	# smach.StateMachine.add('GOTHROUGHDOOR', GoThroughDoor(),
+        #                        transitions={'successfull':'GOTOELEVATOR','unsuccessfull':'ASKFORHELPWITHDOOR'})
 	smach.StateMachine.add('GOTOELEVATOR', GoToElevator(),
                                transitions={'elevator_open':'elevator_open'})
 
