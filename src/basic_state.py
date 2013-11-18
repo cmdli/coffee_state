@@ -8,18 +8,29 @@ import geometry_msgs
 import move_base
 import move_base_msgs
 
-door_front = PoseStamped()
-door_back = PoseStamped()
-elevator_front = PoseStamped()
+#Goal locations
+elevator3_front = PoseStamped()
+elevator3_back = PoseStamped()
+elevator2_front = PoseStamped()
+elevator2_back = PoseStamped()
+cafe = PoseStamped()
+lab = PoseStamped()
+
 client = SimpleActionClient()
 
+#Initializes the various goal locations from measured data
+def init_locations():
+    elevator3_front.header.frame_id = "/map"
+    elevator3_front.pose.position.x = 16.78
+    elevator3_front.pose.position.y = 19.13
+    elevator3_front.pose.orientation.w = 1.0
 
-
-def move(loc, name):
-
+#Move state to a specified location
 class Move(smach.State):
     def __init__(self, loc, name):
         smach.State.__init__(self, outcomes=['done'])
+        self.loc = loc
+        self.name = name
 
     def execute(self, userdata):
         goal = MoveBaseActionGoal()
@@ -31,120 +42,39 @@ class Move(smach.State):
         client.wait_for_result(rospy.Duration.from_sec(1000.0))
         return 'done'
 
-# define state CheckDoors
-class CheckDoors(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['more_doors','no_more_doors'])
+class Wait(smach.State):
+    def __init__(self, msg):
+        smach.State.__init__(self, outcomes=['done'])
+        self.msg = msg
 
     def execute(self, userdata):
-        #rospy.loginfo('Executing state CheckDoors')
-        # Figure out which door
-        return 'no_more_doors'
-
-# define state MoveToDoor
-class MoveToDoor(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['door_open','door_closed'])
-
-    def execute(self, userdata):
-        #rospy.loginfo('Executing state MoveToDoor')
-        # Move to the door here and detect if it's open
-        
-
-        move(door_front, "door_front")
-	return 'door_closed'
-
-# define state AskForHelpWithDoor
-class AskForHelpWithDoor(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['door_open'])
-
-    def execute(self, userdata):
-        #rospy.loginfo('Executing state AskForHelpWithDoor')
-        # Move to the door here and detect if it's open
-        return 'door_open'
-
-# define state GoToElevator
-class MoveToElevator1(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['elevator_open'])
-
-    def execute(self, userdata):
-        #rospy.loginfo('Executing state GoToElevator')
-	#move_base_pub.publish(elevator_door3)
-        elevator_front.header.frame_id = "/map"
-
-        elevator_front.pose.position.x = 33.34
-        elevator_front.pose.position.y = 15.22
-        elevator_front.pose.position.z = 0.0
-
-        elevator_front.pose.position.x = 0.0
-        elevator_front.pose.position.y = 0.0
-        elevator_front.pose.position.z = 0.0
-        elevator_front.pose.position.w = 1.0
-
-        move(elevator_front, "elevator_front")
-        return 'wait_elevator'
-
-class WaitForElevator1(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['elevator_open'])
-
-    def execute(self, userdata):
-        return 'elevator_open'
+        print msg ++ ":"
+        raw_input()
+        return 'done'
 
 class NavigateElevatorDown(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['2nd_floor'])
 
     def execute(self, userdata):
-
+        raw_input()
         move(elevator_back, "elevator_back")
-
+        raw_input()
         move(elevator_front, "elevator_front")
-        
         return '2nd_floor'
-
-class MoveToCafe(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['at_cafe'])
-
-    def execute(self, userdata):
-        return 'at_cafe'
-
-class MoveToElevator2(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['at_elevator'])
-
-    def execute(self, userdata):
-        return 'at_elevator'
-
-class WaitForElevator2(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['elevator_open'])
-
-    def execute(self, userdata):
-        return 'elevator_open'
 
 class NavigateElevatorUp(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['3rd_floor'])
         
     def execute(self, userdata):
+        print "Press any key when elevator is here..."
+        raw_input()
         move(elevator_back, "elevator_back")
-
+        print "Press any key when elevator is at right floor..."
+        raw_input()
         move(elevator_front, "elevator_front")
-
         return '3rd_floor'
-
-class MoveToLab(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['at_lab'])
-
-    def execute(self, userdata):
-        move(lab, "lab")
-
-        return 'at_lab'
 
 def main():
     rospy.init_node('smach_example_state_machine')
@@ -156,22 +86,22 @@ def main():
     with sm:
         # Add states to the container
 	smach.StateMachine.add('GOTOELEVATOR1', Move(elevator3_front, "elevator3_front"),
-                               transitions={'done':'WAITFORELEVATOR1'})
-        smach.StateMachine.add('WAITFORELEVATOR1', Wait(),
+                               transitions={'done':'elevator_open'}) # MODIFIED LINE FOR DEMO
+        smach.StateMachine.add('WAITFORELEVATOR1', Wait("Please call elevator and press a key..."),
                                transitions={'done':'NAVELEVATORDOWN'})
         smach.StateMachine.add('NAVELEVATORDOWN', NavigateElevator(elevator3_back, elevator3_front),
                                transitions={'done':'SWITCHTO2'})
-        smach.StateMachine.add('SWITCHTO2', Wait(),
+        smach.StateMachine.add('SWITCHTO2', Wait('Please switch maps to the second floor and press a key...'),
                                transitions={'done':'MOVETOCAFE'})
         smach.StateMachine.add('MOVETOCAFE', Move(cafe, 'cafe'),
                                transitions={'done':'MOVETOELEVATOR2'})
         smach.StateMachine.add('MOVETOELEVATOR2', Move(elevator2_front, 'elevator2_front'),
                                transitions={'done':'WAITFORELEVATOR2'})
-        smach.StateMachine.add('WAITFORELEVATOR2', Wait(),
+        smach.StateMachine.add('WAITFORELEVATOR2', Wait('Please call the elevator and press a key...'),
                                transitions={'done','NAVIGATEELEVATORUP'})
         smach.StateMachine.add('NAVELEVATORUP', NavigateElevator(elevator2_back, elevator2_front),
                                transitions={'done':'SWITCHTO3'})
-        smach.StateMachine.add('SWITCHTO3', Wait(),
+        smach.StateMachine.add('SWITCHTO3', Wait('Please switch maps to the third floor and press a key...'),
                                transitions={'done':'MOVETOLAB'})
         smach.StateMachine.add('MOVETOLAB', Move(lab, "lab"),
                                transitions={'done':'at_lab'})
