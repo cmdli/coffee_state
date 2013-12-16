@@ -13,7 +13,9 @@
   <depend package='smach'/>
   <depend package='smach_ros'/>
   <depend package='move_base' />
-
+  <depend package="actionlib"/>
+  <depend package="actionlib_msgs"/>
+  <depend package="move_base_msgs" />
 
 </package>
 
